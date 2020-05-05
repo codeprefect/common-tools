@@ -1,0 +1,30 @@
+version: "3.5"
+
+volumes:
+  sonarqube__pg_data:
+  sonarqube__engine_data:
+
+services:
+  sonarqube:
+    image: sonarqube:community-beta
+    environment:
+      - sonar.jdbc.username=sonarqube
+      - sonar.jdbc.password=sonarqube
+      - sonar.jdbc.url=jdbc:postgresql://sonar_postgres/sonar
+    ports:
+      - 9000:9000
+    volumes:
+      - sonarqube__engine_data:/opt/sonarqube
+    links:
+      - sonar_postgres
+    depends_on:
+      - sonar_postgres
+
+  sonar_postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: sonarqube
+      POSTGRES_PASSWORD: sonarqube
+      POSTGRES_DB: sonar
+    volumes:
+      - sonarqube__pg_data:/var/lib/postgresql/data

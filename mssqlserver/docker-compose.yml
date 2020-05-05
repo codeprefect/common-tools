@@ -1,0 +1,16 @@
+version: "3.5"
+
+volumes:
+  mssqlvolume:
+
+services:
+  mssql_server:
+    image: mcr.microsoft.com/mssql/server:2019-GA-ubuntu-16.04
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=P@ssw0rd!
+      - TZ=Africa/Lagos
+    ports:
+      - 1433:1433
+    volumes:
+      - mssqlvolume:/var/opt/mssql
