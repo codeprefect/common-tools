@@ -1,0 +1,46 @@
+version: "3.5"
+
+volumes:
+  mssql_data:
+  mysql_data:
+  postgres_data:
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-GA-ubuntu-16.04
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=P@ssw0rd!
+      - TZ=Africa/Lagos
+    ports:
+      - 1433:1433
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=P@ssw0rd!
+      - TZ=Africa/Lagos
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: P@ssw0rd!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8003:8080
