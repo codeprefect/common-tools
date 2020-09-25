@@ -1,0 +1,14 @@
+version: "3.5"
+
+volumes:
+  local_registry:
+
+services:
+  registry:
+    image: registry:2
+    container_name: registry.local
+    restart: always
+    ports:
+      - 8000:5000
+    volumes:
+      - local_registry:/var/lib/registry

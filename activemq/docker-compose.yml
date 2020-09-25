@@ -1,0 +1,13 @@
+version: "3.5"
+
+services:
+  active-mq:
+    restart: always
+    image: rmohr/activemq
+    ports:
+      - 61616:61616
+      - 8161:8161
+      - 5672:5672
+    volumes:
+      - ./conf:/opt/activemq/conf
+      - ./data:/opt/activemq/data

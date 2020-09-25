@@ -13,9 +13,11 @@
         "titleBar.inactiveForeground": "#15202b99",
         "statusBar.background": "#f2ada7",
         "statusBarItem.hoverBackground": "#eb847b",
-        "statusBar.foreground": "#15202b",
-        "statusBar.border": "#f2ada7",
-        "titleBar.border": "#f2ada7"
+        "statusBar.foreground": "#15202b"
     },
-    "peacock.color": "#f2ada7"
+    "peacock.color": "#f2ada7",
+    "redis-console.host": "localhost",
+    "redis-console.port": 6379,
+    "redis-console.password": "",
+    "redis-console.hostIpFamily": 4
 }

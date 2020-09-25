@@ -1,0 +1,23 @@
+version: "3.5"
+
+volumes:
+  data:
+
+services:
+  minio:
+    image: minio/minio
+    restart: always
+    environment:
+      - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+      - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - TZ=Africa/Lagos
+    ports:
+      - 7000:9000
+    volumes:
+      - data:/data
+    command: server /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3

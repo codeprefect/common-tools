@@ -1,0 +1,13 @@
+version: "3.5"
+
+volumes:
+  data:
+
+services:
+  redis:
+    container_name: redis_local
+    image: redis:6.0.5
+    volumes:
+      - data:/data
+    ports:
+      - 6379:6379
