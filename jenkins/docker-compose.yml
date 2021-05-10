@@ -1,13 +1,39 @@
 version: "3.5"
 
+networks:
+  jenkins:
+
 volumes:
   jenkins_data:
+  jenkins-docker-certs:
 
 services:
+  jenkins-docker: #--rm --detach \
+    image: docker:dind
+    privileged: true
+    networks:
+      jenkins:
+        aliases:
+          - docker
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - jenkins-docker-certs:/certs/client
+      - jenkins_data:/var/jenkins_home
+    ports:
+      - 2376:2376
+
   jenkins:
-    image: jenkins/jenkins:lts
+    build: .
     ports:
       - 8100:8080
       - 8001:50000
     volumes:
       - jenkins_data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client:ro
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+    networks:
+      jenkins:

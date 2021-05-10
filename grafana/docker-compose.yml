@@ -1,0 +1,13 @@
+version: "3.5"
+
+volumes:
+  data:
+
+services:
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    ports:
+      - 3000:3000

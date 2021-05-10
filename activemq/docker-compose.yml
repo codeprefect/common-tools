@@ -11,3 +11,6 @@ services:
     volumes:
       - ./conf:/opt/activemq/conf
       - ./data:/opt/activemq/data
+    cpus: 0.5
+    mem_reservation: 256m
+    mem_limit: 768m

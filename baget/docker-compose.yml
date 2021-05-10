@@ -1,0 +1,30 @@
+version: "3.5"
+
+volumes:
+  baget_data:
+
+services:
+  baget:
+    image: loicsharma/baget:latest
+    environment:
+      - ApiKey=thisissupposedtobeasecret
+      - Storage__Type=FileSystem
+      - Storage__Path=/var/baget/packages
+      - Database__Type=SqlServer
+      - Database__ConnectionString=Server=mssql;Database=baget;Integrated Security=false;Password=P@ssw0rd!;User ID=SA;
+      - Search__Type=Database
+      - TZ=Africa/Lagos
+      - AllowPackageOverwrites=true
+    ports:
+      - 5555:80
+    volumes:
+      - baget_data:/var/baget
+    restart: unless-stopped
+    cpus: 0.5
+    mem_reservation: 128m
+    mem_limit: 512m
+
+networks:
+  default:
+    external:
+      name: homelab
