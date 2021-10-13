@@ -5,10 +5,15 @@ volumes:
 
 services:
   registry:
-    image: registry:2
-    container_name: registry.local
-    restart: always
+    image: registry:2.7.1
+    container_name: registry
+    restart: unless-stopped
     ports:
       - 8000:5000
     volumes:
       - local_registry:/var/lib/registry
+    environment:
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    cpus: 0.5
+    mem_reservation: 256m
+    mem_limit: 512m

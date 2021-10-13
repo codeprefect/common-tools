@@ -6,8 +6,13 @@ volumes:
 services:
   redis:
     container_name: redis_local
-    image: redis:6.0.5
+    image: redis:latest
     volumes:
       - data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - 6379:6379
+    restart: unless-stopped
+    cpus: 0.5
+    mem_reservation: 128m
+    mem_limit: 256m

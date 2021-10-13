@@ -1,0 +1,4 @@
+mirrors:
+  codeprefect.io:
+    endpoint:
+      - "http://registry.local:8000"

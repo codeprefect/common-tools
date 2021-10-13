@@ -1,0 +1,26 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mubarakadeimam@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - dns01:
+        webhook:
+          solverName: dns_dynu
+          groupName: lab.barakimam.me
+          config:
+            Dynu_ClientId:
+              name: dynu-api-cred
+              key: Dynu_ClientId
+            Dynu_Secret:
+              name: dynu-api-cred
+              key: Dynu_Secret

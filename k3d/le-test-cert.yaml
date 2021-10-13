@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: k3s-homelab
+  namespace: default
+spec:
+  secretName: k3s-homelab-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: Issuer
+  commonName: lab.barakimam.me
+  dnsNames:
+  - lab.barakimam.me
+  - "*.lab.barakimam.me"

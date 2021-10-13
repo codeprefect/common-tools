@@ -1,0 +1,175 @@
+
+---
+# test server namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simple-servers
+
+---
+# nginx deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: simple-servers
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+
+---
+# caddy deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caddy
+  namespace: simple-servers
+spec:
+  selector:
+    matchLabels:
+      app: caddy
+  template:
+    metadata:
+      labels:
+        app: caddy
+    spec:
+      containers:
+      - name: caddy
+        image: caddy:latest
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+
+---
+# caddy clusterIP
+apiVersion: v1
+kind: Service
+metadata:
+  name: caddy
+  namespace: simple-servers
+spec:
+  ports:
+  - name: 80-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: caddy
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+
+---
+# nginx clusterIP
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: simple-servers
+spec:
+  ports:
+  - name: 80-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+
+---
+# kubernetes ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    acme.kubernetes.io/enable: "true"
+    # acme.kubernetes.io/staging: "true"
+    acme.kubernetes.io/dns: "dns_dynu"
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  name: nginx-caddy
+  namespace: simple-servers
+spec:
+  tls:
+    - secretName: le-prod-cert
+      hosts:
+        - "*.lab.barakimam.me"
+
+  rules:
+    # remote urls
+    - host: nginx.lab.barakimam.me
+      http: &nginx_http_rules
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+    - host: caddy.lab.barakimam.me
+      http: &caddy_http_rules
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: caddy
+              port:
+                number: 80
+---
+# kubernetes ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  name: nginx-caddy-http
+  namespace: simple-servers
+spec:
+  rules:
+    # local urls
+    - host: nginx.dev.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+    - host: caddy.dev.local
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: caddy
+              port:
+                number: 80

@@ -1,0 +1,104 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rabbitmq
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-config
+  namespace: rabbitmq
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: UEBzc3cwcmQh
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbit-mq
+  namespace: rabbitmq
+spec:
+  selector:
+    matchLabels:
+      app: rabbit-mq
+  template:
+    metadata:
+      labels:
+        app: rabbit-mq
+    spec:
+      containers:
+      - name: rabbit-mq
+        image: rabbitmq:3.8.5-management
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - name: amqp
+          containerPort: 5672
+          protocol: TCP
+        - name: management
+          containerPort: 15672
+          protocol: TCP
+        env:
+          - name: RABBITMQ_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-config
+                key: password
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-config
+                key: username
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: rabbitmq
+  name: rabbitmq-client
+  labels:
+    app: rabbit-mq
+spec:
+  ports:
+   - name: http
+     protocol: TCP
+     port: 15672
+   - name: prometheus
+     protocol: TCP
+     port: 15692
+   - name: amqp
+     protocol: TCP
+     port: 5672
+  selector:
+    app: rabbit-mq
+  type: ClusterIP
+  sessionAffinity: None
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  name: rabbitmq-http
+  namespace: rabbitmq
+spec:
+  rules:
+    # local urls
+    - host: rabbitmq.dev.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rabbitmq-client
+                port:
+                  number: 15672

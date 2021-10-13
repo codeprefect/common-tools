@@ -3,10 +3,19 @@ version: "3.5"
 services:
   rabbitmq:
     container_name: rabbitmq
+    hostname: rabbitmq
     ports:
       - 5672:5672
       - 7002:15672
     environment:
+      - RABBITMQ_DEFAULT_USER:admin
+      - RABBITMQ_DEFAULT_PASS:P@ssw0rd!
       - RABBITMQ_MANAGEMENT_DEFAULT_USER:admin
       - RABBITMQ_MANAGEMENT_DEFAULT_PASS:P@ssw0rd!
-    image: rabbitmq:3.8.5-management
+    image: rabbitmq:3.8.11-management
+    restart: unless-stopped
+    volumes:
+      - data:/var/lib/rabbitmq/mnesia
+
+volumes:
+  data:

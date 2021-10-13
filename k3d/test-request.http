@@ -1,0 +1,12 @@
+
+###
+GET https://caddy.lab.barakimam.me HTTP/1.1
+
+###
+GET https://caddy.dev.local HTTP/1.1
+
+###
+GET https://nginx.lab.barakimam.me HTTP/1.1
+
+###
+GET http://nginx.dev.local HTTP/1.1
