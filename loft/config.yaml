@@ -1,0 +1,11 @@
+# The domain Loft is running under
+loftHost: loft.labs.barakimam.me
+# Authentication Options for loft
+auth:
+  github:
+    # ClientID of the github application
+    clientId: e403df7da561fe6ef9e4
+    # ClientSecret of the github application
+    clientSecret: 0b41400d643e3733826ccdd0861a66ed5d18ee12
+    # Callback URL in the form of https://your-loft-domain/auth/github/callback
+    redirectURI: https://loft.labs.barakimam.me/auth/github/callback

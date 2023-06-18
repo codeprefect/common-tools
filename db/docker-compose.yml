@@ -1,14 +1,11 @@
-version: "3.5"
-
-volumes:
-  mssql_data:
-  mysql_data:
-  postgres_data:
+version: "3.8"
 
 services:
   mssql:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    # image: mcr.microsoft.com/azure-sql-edge
+    image: mcr.microsoft.com/mssql/server:2022-latest
     restart: unless-stopped
+    platform: linux/amd64
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=P@ssw0rd!
@@ -16,48 +13,88 @@ services:
     ports:
       - 1433:1433
     volumes:
-      - mssql_data:/var/opt/mssql
+      - ~/.docker_volumes/mssql:/var/opt/mssql
     # cpus: 2
     # mem_reservation: 256m
     # mem_limit: 2.5g
 
   mysql:
-    image: mysql:5.7
-    restart: unless-stopped
-    environment:
-      - MYSQL_ROOT_PASSWORD=P@ssw0rd!
-      - TZ=Africa/Lagos
+    image: mysql/mysql-server
     ports:
-      - 3306:3306
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: P@ssw0rd!
+      MYSQL_USER: codeprefect
+      MYSQL_PASSWORD: P@ssw0rd!
+      MYSQL_DATABASE: public
+      TZ: Africa/Lagos
+    restart: unless-stopped
     volumes:
-      - mysql_data:/var/lib/mysql
-    cpus: 1
-    mem_reservation: 256m
-    mem_limit: 1g
+      - ~/.docker_volumes/mysql:/var/lib/mysql
+    # cpus: 1
+    # mem_reservation: 256m
+    # mem_limit: 1g
 
   postgres:
-    image: postgres
+    image: postgres:15.2-alpine
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: P@ssw0rd!
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ~/.docker_volumes/postgres:/var/lib/postgresql/data
     ports:
       - 5432:5432
     cpus: 1
     mem_reservation: 128m
     mem_limit: 768m
 
+  postgres-postgis:
+    image: ghcr.io/baosystems/postgis:15
+    # build: 
+    #   dockerfile: postgres.Dockerfile
+    #   context: custom
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: P@ssw0rd!
+    volumes:
+      - ~/.docker_volumes/postgres_postgis:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+    cpus: 1
+    mem_reservation: 128m
+    mem_limit: 768m
+
+  mongo:
+    image: mongo:6.0.5
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - ~/.docker_volumes/mongodb:/data/db
+    ports:
+      - 27017:27017
+
+  arango:
+    image: arangodb
+    restart: unless-stopped
+    environment:
+      - ARANGO_ROOT_PASSWORD=P@ssw0rd!
+    volumes:
+      - ~/.docker_volumes/arangodb:/var/lib/arangodb3
+    ports:
+      - 8529:8529
+
+
   adminer:
     image: adminer
     restart: unless-stopped
+    environment:
+      ADMINER_PLUGINS: ''
+    volumes:
+      - ./resources/hydra.adminer.css:/var/www/html/adminer.css
     ports:
       - 8003:8080
     cpus: 0.5
     mem_reservation: 64m
     mem_limit: 256m
-
-networks:
-  default:
-    external:
-      name: homelab

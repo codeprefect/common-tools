@@ -1,0 +1,326 @@
+# https://kubernetes.io/docs/concepts/configuration/configmap/
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: cortex-single-process-config
+  namespace: observability
+data:
+  config.yaml: | 
+    # Configuration for running Cortex in single-process mode.
+    # This should not be used in production.  It is only for getting started
+    # and development.
+    
+    # Disable the requirement that every request to Cortex has a
+    # X-Scope-OrgID header. `fake` will be substituted in instead.
+    auth_enabled: false
+    
+    server:
+      http_listen_port: 9009
+    
+      # Configure the server to allow messages up to 100MB.
+      grpc_server_max_recv_msg_size: 104857600
+      grpc_server_max_send_msg_size: 104857600
+      grpc_server_max_concurrent_streams: 1000
+      grpc_server_keepalive_timeout: 120s
+      grpc_server_min_time_between_pings: 30s
+      grpc_server_ping_without_stream_allowed: true
+    
+    distributor:
+      remote_timeout: 4s
+      shard_by_all_labels: true
+      pool:
+        health_check_ingesters: true
+    
+    ingester_client:
+      grpc_client_config:
+        # Configure the client to allow messages up to 100MB.
+        max_recv_msg_size: 104857600
+        max_send_msg_size: 104857600
+        grpc_compression: gzip
+    
+    ingester:
+      walconfig:
+        wal_enabled: false
+      max_chunk_age: 2h
+      lifecycler:
+        # The address to advertise for this ingester.  Will be autodiscovered by
+        # looking up address on eth0 or en0; can be specified if this fails.
+        # address: 127.0.0.1
+    
+        # We want to start immediately and flush on shutdown.
+        join_after: 0
+        min_ready_duration: 0s
+        final_sleep: 0s
+        num_tokens: 512
+    
+        # Use an in memory ring store, so we don't need to launch a Consul.
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+    
+    storage:
+      engine: blocks
+    
+    blocks_storage:
+      tsdb:
+        dir: /tmp/cortex/tsdb
+    
+      bucket_store:
+        sync_dir: /tmp/cortex/tsdb-sync
+    
+      # You can choose between local storage and Amazon S3, Google GCS and Azure storage. Each option requires additional configuration
+      # as shown below. All options can be configured via flags as well which might be handy for secret inputs.
+      backend: s3 # s3, gcs, azure or filesystem are valid options
+      s3:
+        bucket_name: cortex
+        endpoint: minio.default:9000
+        # Configure your S3 credentials below.
+        secret_access_key: "EJiMm4OWwCtFLScEEwxapE43xLMZXKvB"
+        access_key_id:     "gyThI4jYmkQvRCOn"
+        insecure: true
+    #  gcs:
+    #    bucket_name: cortex
+    #    service_account: # if empty or omitted Cortex will use your default service account as per Google's fallback logic
+    #  azure:
+    #    account_name:
+    #    account_key:
+    #    container_name:
+    #    endpoint_suffix:
+    #    max_retries: # Number of retries for recoverable errors (defaults to 20)
+    #  filesystem:
+    #   dir: /data/tsdb
+    
+    compactor:
+      data_dir: /tmp/cortex/compactor
+      sharding_ring:
+        kvstore:
+          store: inmemory
+    
+    frontend_worker:
+      match_max_concurrent: true
+    
+    ruler:
+      enable_api: true
+      enable_sharding: false
+    
+    ruler_storage:
+      backend: local
+      local:
+        directory: /tmp/cortex/rules
+    
+# ---
+# 
+# # https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: cortex-data
+#   namespace: observability
+#   labels:
+#     app: cortex
+# spec:
+#   # AKS: default,managed-premium
+#   # GKE: standard
+#   # EKS: gp2 (custom)
+#   # Rook: rook-ceph-block,rook-ceph-fs
+#   storageClassName: default
+#   accessModes:
+#   - ReadWriteMany
+#   resources:
+#     requests:
+#       storage: 10Gi
+# ---
+# 
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: cortex-data
+#   labels:
+#     type: local
+# spec:
+#   storageClassName: default
+#   capacity:
+#     storage: 10Gi
+#   accessModes:
+#     - ReadWriteMany
+#   claimRef:
+#     namespace: observability
+#     name: cortex-data
+#   hostPath:
+#     path: "/usr/cortex-data2"
+# 
+---
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  cortex
+  namespace: observability
+  labels:
+    app:  cortex
+spec:
+  selector:
+    matchLabels:
+      app: cortex
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  cortex
+    spec:
+      # initContainers:
+        # Init containers are exactly like regular containers, except:
+          # - Init containers always run to completion.
+          # - Each init container must complete successfully before the next one starts.
+      containers:
+      - name:  cortex
+        image:  quay.io/cortexproject/cortex:master-8a416fc
+        imagePullPolicy: IfNotPresent
+        args:
+          - -config.file=/etc/single-process-config-blocks.yaml
+          #  - -ring.store=consul
+          #  - -consul.hostname=cortex-consul.observability
+          #  - -distributor.replication-factor=1
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 2Gi
+        livenessProbe:
+          tcpSocket:
+            port: 9009
+          initialDelaySeconds: 15
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 9009
+          initialDelaySeconds: 15
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 30 
+        ports:
+        - containerPort:  9009
+          name:  http
+        volumeMounts:
+        - name: single-process-config
+          mountPath: /etc/single-process-config-blocks.yaml
+          subPath: config.yaml
+          #        - name: cortex-data
+          # mountPath: /data/tsdb
+      volumes:
+        - name: single-process-config
+          configMap:
+            name: cortex-single-process-config
+        # - name: cortex-data
+        #  persistentVolumeClaim:
+        #   claimName: cortex-data
+      restartPolicy: Always
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex
+  namespace: observability
+spec:
+  selector:
+    app: cortex
+  type: ClusterIP
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 9009
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cortex-ingress
+  namespace: observability
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure 
+spec:
+  tls:
+  - hosts:
+      - cortex.dev.localhost
+    secretName: dev-localhost-tls
+  rules:
+  - host: cortex.dev.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cortex
+            port:
+              number: 80
+
+---
+# # https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name:  cortex-consul
+#   namespace: observability
+#   labels:
+#     app:  cortex-consul
+# spec:
+#   selector:
+#     matchLabels:
+#       app: cortex-consul
+#   replicas: 1
+#   template:
+#     metadata:
+#       labels:
+#         app: cortex-consul
+#     spec:
+#       # initContainers:
+#         # Init containers are exactly like regular containers, except:
+#           # - Init containers always run to completion.
+#           # - Each init container must complete successfully before the next one starts.
+#       containers:
+#       - name: consul
+#         image: consul:latest
+#         imagePullPolicy: IfNotPresent
+#         resources:
+#           requests:
+#             cpu: 100m
+#             memory: 100Mi
+#           limits:
+#             cpu: 300m
+#             memory: 512Mi
+#         env:
+#         - name: CONSUL_BIND_INTERFACE
+#           value: eth0
+#         ports:
+#         - containerPort: 8500
+#           name: consul  
+#       restartPolicy: Always
+# ---
+# # https://kubernetes.io/docs/concepts/services-networking/service/
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: cortex-consul
+#   namespace: observability
+# spec:
+#   selector:
+#     app: cortex-consulcortex-consul
+#   type: ClusterIP
+#   ports:
+#   - name: http
+#     protocol: TCP
+#     port: 80
+#     targetPort: 8500
+# 

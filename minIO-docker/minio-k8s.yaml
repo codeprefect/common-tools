@@ -1,0 +1,206 @@
+---
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: dev-tools
+  labels:
+    app: minio
+spec:
+  storageClassName: default
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-data
+  namespace: dev-tools
+  labels:
+    type: local
+    app: minio
+spec:
+  storageClassName: default
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  claimRef:
+    namespace: dev-tools
+    name: minio-data
+  hostPath:
+    path: "/usr/minio-data"
+ 
+---
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: dev-tools
+  labels:
+    app: minio
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  minio
+    spec:
+      containers:
+      - name: backend
+        image: minio/minio:latest
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: MINIO_ROOT_USER
+            value: AKIAIOSFODNN7EXAMPLE
+          - name: MINIO_ROOT_PASSWORD
+            value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          - name: TZ
+            value: Africa/Lagos
+        args: [ "server", "/data" ]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 1Gi
+        livenessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 15
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health/live
+            port: 9000
+          initialDelaySeconds: 15
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 30 
+        ports:
+        - containerPort:  9000
+          name:  http
+        volumeMounts:
+        - name: minio-data
+          mountPath: /data
+
+      - name: console
+        image: minio/console:latest
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: CONSOLE_PBKDF_PASSPHRASE
+            value: console_salt
+          - name: CONSOLE_PBKDF_SALT
+            value: console_salt
+          - name: CONSOLE_ACCESS_KEY
+            value: console
+          - name: CONSOLE_SECRET_KEY
+            value: secretforminioconsole0123456789
+          - name: CONSOLE_MINIO_SERVER
+            value: http://backend:9000
+          - name: TZ
+            value: Africa/Lagos
+        command: [ "./console", "server" ]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        livenessProbe:
+          tcpSocket:
+            port: 9090
+          initialDelaySeconds: 15
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9090
+          initialDelaySeconds: 15
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 30 
+        ports:
+        - containerPort:  9090
+          name:  http
+
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: minio-data
+      restartPolicy: Always
+
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: dev-tools
+spec:
+  selector:
+    app: minio
+  type: ClusterIP
+  ports:
+  - name: backend
+    protocol: TCP
+    port: 80
+    targetPort: 9000
+  - name: console
+    protocol: TCP
+    port: 8080
+    targetPort: 9090
+
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  namespace: dev-tools
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  rules:
+  - host: minio-backend.dev.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: minio
+            port:
+              number: 80
+  - host: minio-ui.dev.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: minio
+            port:
+              number: 8080
+

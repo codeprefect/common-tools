@@ -2,10 +2,22 @@ version: "3"
 services:
   kroki:
     image: yuzutech/kroki
+    platform: linux/amd64
+    depends_on:
+      - mermaid
+      - plantuml
+    environment:
+      - KROKI_MERMAID_HOST=mermaid
+      - KROKI_PLANTUML_HOST=plantuml
     ports:
       - "8000:8000"
-
+  mermaid:
+    image: yuzutech/kroki-mermaid:0.20.0
+    expose:
+      - "8002"
   plantuml:
-    image: codeprefect/plantuml-server:jetty
+    image: plantuml/plantuml-server:jetty
+    expose:
+      - "8080"
     ports:
-      - 8080:8080
+      - "8040:8080"

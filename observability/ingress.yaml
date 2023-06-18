@@ -1,0 +1,39 @@
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-external
+  namespace: observability
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`grafana.labs.barakimam.me`)
+      kind: Rule
+      services:
+        - name: kube-prometheus-stack-grafana
+          kind: Service
+          port: 80
+  tls:
+    secretName: le-labs-barakimam
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-dashboard
+  namespace: observability
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`grafana.dev.localhost`)
+      kind: Rule
+      services:
+        - name: kube-prometheus-stack-grafana
+          kind: Service
+          port: 80
+  tls:
+    secretName: dev-localhost-tls
+
+

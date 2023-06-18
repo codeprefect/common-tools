@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  minio:
+    image: minio/minio:latest
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE
+      - MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - TZ=Africa/Lagos
+    ports:
+      - 7000:9000
+      - 7001:9001
+    volumes:
+      - ~/.docker_volumes/minio_data:/minio-image/storage
+    command: ["server", "/minio-image/storage", "--console-address", ":9001"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    cpus: 0.5
+    mem_reservation: 256m
+    mem_limit: 512m

@@ -1,0 +1,56 @@
+
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: minio
+  namespace: default
+subsets:
+  - addresses:
+      - ip: 192.168.65.2
+    ports:
+      - port: 9000
+        name: minio-backend
+      - port: 9080
+        name: minio-console
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: minio
+  namespace: default
+spec:
+  clusterIP: None
+  ports:
+  - port: 80
+    targetPort: 9080
+    name: minio-console
+  - port: 8080
+    targetPort: 9000
+    name: minio-backend
+
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  rules:
+  - host: minio.dev.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: minio
+            port:
+              number: 80
+---
+

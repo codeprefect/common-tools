@@ -1,0 +1,29 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: le-labs-barakimam
+spec:
+  secretName: le-labs-barakimam
+  commonName: "labs.barakimam.me"
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  dnsNames:
+  - "*.labs.barakimam.me"
+  - "labs.barakimam.me"
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ca-dev-localhost
+spec:
+  secretName: dev-localhost-tls
+  commonName: "dev.localhost"
+  issuerRef:
+    kind: ClusterIssuer
+    name: dev-localhost-ca
+  dnsNames:
+  - "*.dev.localhost"
+  - "dev.localhost"

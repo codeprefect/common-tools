@@ -1,0 +1,81 @@
+# Hotrod Deployment Configuration
+ 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ labels:
+   app: hotrod
+ name: hotrod
+spec:
+ replicas: 1
+ selector:
+   matchLabels:
+     app: hotrod
+ template:
+   metadata:
+     labels:
+       app: hotrod
+   spec:
+     containers:
+       - args:
+           - all
+         env:
+           - name: JAEGER_AGENT_HOST
+             value: tempo.observability
+           - name: JAEGER_AGENT_PORT
+             value: '6831'
+           - name: JAEGER_SAMPLER_TYPE
+             value: const
+           - name: JAEGER_SAMPLER_PARAM
+             value: '1'
+         image: jaegertracing/example-hotrod:latest
+         name: hotrod
+         ports:
+           - containerPort: 8080
+     restartPolicy: Always
+
+---
+# Hotrod Service Configuration
+ 
+apiVersion: v1
+kind: Service
+metadata:
+ labels:
+   app: hotrod
+ name: hotrod
+spec:
+ ports:
+   - name: 'http'
+     port: 8080
+     targetPort: 8080
+ selector:
+   app: hotrod
+ type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hotrod-ingress
+spec:
+  tls:
+  - hosts:
+      - hotrod.dev.localhost
+    secretName: dev-localhost-tls
+
+  rules:
+  - host: hotrod.dev.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hotrod
+            port:
+              number: 8080
+---
+
+
+
+

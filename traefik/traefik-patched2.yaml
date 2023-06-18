@@ -1,0 +1,8 @@
+
+spec:
+  template:
+    spec:
+      containers:
+        - name: traefik
+          image: traefik:2.6.1
+          # image: rancher/mirrored-library-traefik:2.6.0

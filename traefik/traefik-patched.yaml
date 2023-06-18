@@ -1,0 +1,40 @@
+
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+        - --global.checknewversion
+        - --global.sendanonymoususage
+        - --entryPoints.metrics.address=:9100/tcp
+        - --entryPoints.traefik.address=:9000/tcp
+        - --entrypoints.web.address=:8000/tcp
+        - --entryPoints.websecure.address=:8443/tcp
+        - --entrypoints.web.http.redirections.entryPoint.to=websecure
+        - --api.dashboard=true
+        - --ping=true
+        - --metrics.prometheus=true
+        - --metrics.prometheus.entrypoint=metrics
+        - --providers.kubernetescrd
+        - --providers.kubernetescrd.allowExternalNameServices=true
+        - --providers.kubernetesingress
+        - --providers.kubernetesingress.allowExternalNameServices=true
+        - --providers.kubernetesgateway
+        - --experimental.kubernetesgateway
+        - --experimental.http3=true
+        - --entrypoints.websecure.http.tls=true
+        # - --certificatesResolvers.letls.acme.email=mubarakadeimam@gmail.com
+        # - --certificatesResolvers.letls.acme.storage=/data/acme.json
+        # - --certificatesresolvers.letls.acme.tlschallenge=true
+        # - --certificatesResolvers.ledns.acme.email=mubarakadeimam@gmail.com
+        # - --certificatesResolvers.ledns.acme.storage=/data/acme.json
+        # - --certificatesresolvers.ledns.acme.dnschallenge.provider=namecheap
+        # - --certificatesresolvers.ledns.acme.dnschallenge.delaybeforecheck=5
+        - --pilot.token=8957c820-0100-4106-9386-bc164c29ad39
+        name: traefik
+        # env:
+        # - name: NAMECHEAP_API_USER
+        #   value: embeemania
+        # - name: NAMECHEAP_API_KEY
+        #   value: 161099db82ad47318dabb69d2116552a
+        # image: rancher/mirrored-library-traefik:2.6.0

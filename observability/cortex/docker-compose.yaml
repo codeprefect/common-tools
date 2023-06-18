@@ -1,0 +1,23 @@
+
+volumes:
+  data:
+
+services:
+  cortex:
+    image: quay.io/cortexproject/cortex:master-8a416fc
+    restart: unless-stopped
+    ports:
+      - 9001:9009
+    volumes:
+      - data:/data/tsdb
+    configs:
+      - source: single_process_config
+        target: /etc/single-process-config-blocks.yaml
+        mode: 0440
+    command: [ "-config.file=/etc/single-process-config-blocks.yaml" ]
+
+
+configs:
+  single_process_config:
+    file: ./single-process-config-blocks.yaml
+

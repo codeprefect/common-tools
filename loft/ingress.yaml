@@ -1,0 +1,85 @@
+# dashboard.yaml
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: loft-ingress-passthrough
+  namespace: loft
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    passthrough: true
+  routes:
+  - match: HostSNI(`localhost`)
+    services:
+    - name: loft
+      port: 443
+---
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: loft-ingress-local
+  namespace: loft
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: HostSNI(`loft.dev.localhost`)
+    services:
+    - name: loft
+      port: 80
+  tls:
+    secretName: dev-localhost-tls
+    domains:
+    - main: dev.localhost
+      sans:
+      - '*.dev.localhost'
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loft-ingress-external
+  labels:
+    name: loft-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  rules:
+  - host: loft.labs.barakimam.me
+    http:
+      paths:
+      - pathType: ImplementationSpecific
+        path: "/"
+        backend:
+          service:
+            name: loft
+            port:
+              number: 80
+  tls:
+    - secretName: dev-localhost-tls
+      hosts:
+      - labs.barakimam.me
+      - '*.labs.barakimam.me'
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: loft-global-ingress
+  namespace: loft
+  labels:
+    name: loft-sslip-ingress
+spec:
+  entryPoints:
+    - web
+  routes:
+  - kind: Rule
+    match: HostRegexp(`sslip.io`, `loft.{*}.sslip.io`)
+    services:
+      - kind: Service
+        name: loft
+        port: 80
+    pathType: ImplementationSpecific

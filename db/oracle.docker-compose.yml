@@ -1,0 +1,15 @@
+version: "3.5"
+
+services:
+  oracle:
+    image: gvenzl/oracle-free:23.2.0-faststart
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      ORACLE_PASSWORD: oracle_sql_password
+      APP_USER: codeprefect
+      APP_USER_PASSWORD: oracle_sql_password
+    volumes:
+      - ~/.docker_volumes/oracle:/opt/oracle/oradata
+    ports:
+      - 1521:1521

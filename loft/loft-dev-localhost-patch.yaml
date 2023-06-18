@@ -1,0 +1,17 @@
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        volumeMounts:
+        - name: dev-localhost-ca-root
+          mountPath: /etc/ssl/certs/labs-barakimam-ca.pem
+          subPath: labs-barakimam-ca.pem
+          readOnly: false
+        resources: {}
+      volumes:
+        - name: dev-localhost-ca-root
+          configMap:
+            # Provide the name of the ConfigMap containing the files you want
+            # to add to the container
+            name: dev-localhost-ca-root
