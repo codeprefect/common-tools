@@ -1,0 +1,9 @@
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=P@ssw0rd!
+KC_HEALTH_ENABLED=true
+KC_METRICS_ENABLED=true
+KC_DB=mssql
+KC_DB_URL="jdbc:sqlserver://host.docker.internal:1433;databaseName=keycloak;encrypt=false;trustServerCertificate=true"
+KC_DB_USERNAME=sa
+KC_DB_PASSWORD=P@ssw0rd!
+KC_TRANSACTION_XA_ENABLED=false

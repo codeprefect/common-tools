@@ -14,9 +14,9 @@ services:
       - 1433:1433
     volumes:
       - ~/.docker_volumes/mssql:/var/opt/mssql
-    # cpus: 2
-    # mem_reservation: 256m
-    # mem_limit: 2.5g
+    cpus: 2
+    mem_reservation: 256M
+    mem_limit: 1.5G
 
   mysql:
     image: mysql/mysql-server
@@ -24,9 +24,7 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: P@ssw0rd!
-      MYSQL_USER: codeprefect
-      MYSQL_PASSWORD: P@ssw0rd!
-      MYSQL_DATABASE: public
+      MYSQL_ROOT_HOST: "%"
       TZ: Africa/Lagos
     restart: unless-stopped
     volumes:
@@ -36,7 +34,7 @@ services:
     # mem_limit: 1g
 
   postgres:
-    image: postgres:15.2-alpine
+    image: postgres:15.4-alpine
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: P@ssw0rd!
@@ -50,9 +48,6 @@ services:
 
   postgres-postgis:
     image: ghcr.io/baosystems/postgis:15
-    # build: 
-    #   dockerfile: postgres.Dockerfile
-    #   context: custom
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: P@ssw0rd!
