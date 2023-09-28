@@ -11,13 +11,14 @@ volumes:
 services:
   sonarqube:
     image: sonarqube:10.0.0-community
+    # image: sonarqube:10.1.0-community
     # image: mc1arke/sonarqube-with-community-branch-plugin:9.9-community
     ports:
       - 9000:9000
     networks:
       - sonarnet
     environment:
-      - SONAR_JDBC_URL=jdbc:postgresql://host.docker.internal:5433/sonarqube
+      - SONAR_JDBC_URL=jdbc:postgresql://host.docker.internal:5432/sonarqube
       - SONAR_JDBC_USERNAME=postgres
       - SONAR_JDBC_PASSWORD=P@ssw0rd!
     volumes:
